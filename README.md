@@ -7,11 +7,9 @@
    Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotating/Rolling basis.
 </p>
 
-<p align="center">
-  [![Version](https://img.shields.io/badge/Version-1.0.1%20-green.svg?style=flat)](https://github.com/InfinityBotList/Mongo-2-Postgres) 
-  [![Made with](https://img.shields.io/badge/Language-GO%20-blue.svg?style=flat)](https://github.com/InfinityBotList/Mongo-2-Postgres) 
-  [![License Type](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://github.com/InfinityBotList/Mongo-2-Postgres) 
-</p>
+[![Version](https://img.shields.io/badge/Version-1.0.1%20-green.svg?style=flat)](https://github.com/InfinityBotList/Mongo-2-Postgres) 
+[![Made with](https://img.shields.io/badge/Language-GO%20-blue.svg?style=flat)](https://github.com/InfinityBotList/Mongo-2-Postgres) 
+[![License Type](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://github.com/InfinityBotList/Mongo-2-Postgres)
 
 --- 
 
