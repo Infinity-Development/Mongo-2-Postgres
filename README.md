@@ -21,6 +21,7 @@
 ## Features
 - Built-In Watcher to allow for interval based back ups.
 - Ability to ignore specified collections/models as a whole. 
+- Easy to use, setup and configure. Extremely performant and reliable.
 
 ---
 
