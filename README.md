@@ -23,7 +23,7 @@ Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotati
 
 ## Example Watch Output
 
-```shell
+```
 DBTool: init
 DBTool: Connecting to mongodb://127.0.0.1:27017/infinity
 Connected to mongoDB?
