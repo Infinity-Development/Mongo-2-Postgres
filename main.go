@@ -104,6 +104,7 @@ func main() {
 			fmt.Println("Waiting for next backup rotation")
 			for x := range time.Tick(d) {
 				fmt.Println("Autobackup started at", x)
+
 				backupDb(ctx, db, colNames)
 				fmt.Println("Waiting for next backup rotation")
 			}
