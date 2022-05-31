@@ -18,6 +18,12 @@
 
 ---
 
+## Features
+- Built-In Watcher to allow for backing up data on a rolling basis for the provided interval
+- Ability to ignore specified collections/models as a whole. 
+
+---
+
 ## Usage
 
 | Command      | Description                                                   | Example                                        |
