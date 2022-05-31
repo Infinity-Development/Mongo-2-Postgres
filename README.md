@@ -1,5 +1,11 @@
-# Mongo-2-Postgres
-Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotating/Rolling basis.
+<h2 align='center'>
+  <img src="https://media.discordapp.net/attachments/653733403841134600/981292240137769001/IMG_5344.png" height='100px' width='100px' />
+  <br> 
+  Mongo to PostgreSQL
+</h2>
+<p align="center">
+   Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotating/Rolling basis.
+</p>
 
 --- 
 
