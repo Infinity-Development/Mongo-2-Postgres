@@ -5,7 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -21,6 +23,7 @@ var (
 	act                string
 	backupTimeInterval int
 	ignoredCols        []string
+	lastRotation       int
 )
 
 func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
@@ -67,7 +70,24 @@ func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
 	}
 }
 
+func handleMaintSignals() {
+	ch := make(chan os.Signal, 1)
+	go func() {
+		for sig := range ch {
+			switch sig {
+			case syscall.SIGUSR1:
+				tsl := int(time.Now().Unix()) - lastRotation
+				nextRotation := time.Duration(backupTimeInterval)*time.Minute - time.Duration(tsl)*time.Second
+				fmt.Println("[DEBUG] lastRotation =", lastRotation, ". Time since last rotation:", tsl, "seconds, estimated time till next rotation:", nextRotation)
+			}
+		}
+	}()
+	signal.Notify(ch, syscall.SIGUSR1, syscall.SIGUSR2)
+}
+
 func main() {
+	handleMaintSignals()
+
 	fmt.Println("DBTool: init")
 	ctx := context.Background()
 
@@ -77,7 +97,7 @@ func main() {
 	flag.StringVar(&dbName, "dbname", "infinity", "DB name to connect to")
 	flag.StringVar(&act, "act", "", "Action to perform (backup/watch)")
 	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "Backup Postgres DB URL")
-	flag.IntVar(&backupTimeInterval, "interval", 60, "Interval for watcher to wait for")
+	flag.IntVar(&backupTimeInterval, "interval", 60, "Interval for watcher to wait for (minutes)")
 	flag.StringVar(&ignored, "ignore", "sessions", "What collections to ignore, seperate using ,! Spaces are ignored")
 
 	flag.Parse()
@@ -120,6 +140,7 @@ func main() {
 			d := time.Duration(backupTimeInterval) * time.Minute
 			backupDb(ctx, db, colNames)
 			fmt.Println("Waiting for next backup rotation")
+			lastRotation = int(time.Now().Unix())
 			for x := range time.Tick(d) {
 				fmt.Println("Autobackup started at", x)
 
@@ -134,6 +155,7 @@ func main() {
 
 				backupDb(ctx, db, colNames)
 				fmt.Println("Waiting for next backup rotation")
+				lastRotation = int(time.Now().Unix())
 			}
 		}()
 	} else {
