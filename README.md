@@ -3,6 +3,11 @@ Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotati
 
 --- 
 
+## Setup
+• Check back soon!
+
+---
+
 ## Usage
 > Run ``pkill -USR1 db-backup-tool`` to get time to next rotation
 
