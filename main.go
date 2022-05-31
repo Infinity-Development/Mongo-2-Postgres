@@ -76,9 +76,9 @@ func handleMaintSignals() {
 		for sig := range ch {
 			switch sig {
 			case syscall.SIGUSR1:
-				tsl := int(time.Now().Unix()) - lastRotation
-				nextRotation := time.Duration(backupTimeInterval)*time.Minute - time.Duration(tsl)*time.Second
-				fmt.Println("[DEBUG] lastRotation =", lastRotation, ". Time since last rotation:", tsl, "seconds, estimated time till next rotation:", nextRotation)
+				tsl := time.Duration(int(time.Now().Unix())-lastRotation) * time.Second
+				nextRotation := time.Duration(backupTimeInterval)*time.Minute - tsl
+				fmt.Println("[DEBUG] lastRotation =", lastRotation, ". Time since last rotation:", tsl, ", estimated time till next rotation:", nextRotation)
 			}
 		}
 	}()
