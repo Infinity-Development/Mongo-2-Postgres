@@ -19,7 +19,7 @@
 ---
 
 ## Features
-- Built-In Watcher to allow for backing up data on a rolling basis for the provided interval
+- Built-In Watcher to allow for interval based back ups.
 - Ability to ignore specified collections/models as a whole. 
 
 ---
