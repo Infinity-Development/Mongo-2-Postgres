@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -19,6 +20,7 @@ var (
 	backupDbName       string
 	act                string
 	backupTimeInterval int
+	ignoredCols        []string
 )
 
 func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
@@ -31,8 +33,15 @@ func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
 	}
 
 	for _, column := range colNames {
-		if column == "sessions" {
-			fmt.Println("Ignoring sessions as it is way too big")
+		var flag bool
+		for _, col := range ignoredCols {
+			if col == column {
+				fmt.Println("Ignoring", col, "as it is in ignoredCols")
+				flag = true
+			}
+		}
+
+		if flag {
 			continue
 		}
 
@@ -62,13 +71,18 @@ func main() {
 	fmt.Println("DBTool: init")
 	ctx := context.Background()
 
+	var ignored string
+
 	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "MongoDB connection string")
 	flag.StringVar(&dbName, "dbname", "infinity", "DB name to connect to")
 	flag.StringVar(&act, "act", "", "Action to perform (backup/watch)")
 	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "Backup Postgres DB URL")
 	flag.IntVar(&backupTimeInterval, "interval", 60, "Interval for watcher to wait for")
+	flag.StringVar(&ignored, "ignore", "sessions", "What collections to ignore, seperate using ,! Spaces are ignored")
 
 	flag.Parse()
+
+	ignoredCols = strings.Split(strings.ReplaceAll(ignored, " ", ""), ",")
 
 	progName := os.Args[0]
 
@@ -91,6 +105,10 @@ func main() {
 
 	colNames, err := db.ListCollectionNames(ctx, bson.D{})
 
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println("Collections in DB: ", colNames)
 
 	fmt.Println("DBTool: Connected to mongo successfully")
@@ -104,6 +122,15 @@ func main() {
 			fmt.Println("Waiting for next backup rotation")
 			for x := range time.Tick(d) {
 				fmt.Println("Autobackup started at", x)
+
+				colNames, err := db.ListCollectionNames(ctx, bson.D{})
+
+				if err != nil {
+					fmt.Println("Skipping backup as ListCollectionNames returned error:", err)
+					continue
+				}
+
+				fmt.Println("Current collections in DB: ", colNames)
 
 				backupDb(ctx, db, colNames)
 				fmt.Println("Waiting for next backup rotation")
