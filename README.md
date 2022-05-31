@@ -21,6 +21,29 @@ Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotati
 
 ---
 
+## Example Watch Output
+
+```shell
+DBTool: init
+DBTool: Connecting to mongodb://127.0.0.1:27017/infinity
+Connected to mongoDB?
+Collections in DB:  [packages staff_apps dev_apps users reviews transcripts sessions tickets oauths suggests bots votes]
+DBTool: Connected to mongo successfully
+Backing up packages
+Backing up staff_apps
+Backing up dev_apps
+Backing up users
+Backing up reviews
+Backing up transcripts
+Ignoring sessions as it is in ignoredCols
+Backing up tickets
+Backing up oauths
+Backing up suggests
+Backing up bots
+Backing up votes
+Waiting for next backup rotation
+```
+
 ## Contributors
 <a href="https://github.com/InfinityBotList/Mongo-2-Postgres/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=InfinityBotList/Mongo-2-Postgres" />
