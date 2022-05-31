@@ -1,5 +1,5 @@
 # Mongo-2-Postgres
-Simple tool used to backup and migrate Data from Mongoose to Postgres on a Rotating/Rolling basis.
+Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotating/Rolling basis.
 
 --- 
 
