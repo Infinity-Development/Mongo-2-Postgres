@@ -78,7 +78,7 @@ func handleMaintSignals() {
 			case syscall.SIGUSR1:
 				tsl := time.Duration(int(time.Now().Unix())-lastRotation) * time.Second
 				nextRotation := time.Duration(backupTimeInterval)*time.Minute - tsl
-				fmt.Println("[DEBUG] lastRotation =", lastRotation, ". Time since last rotation:", tsl, ", estimated time till next rotation:", nextRotation)
+				fmt.Println("[DEBUG] lastRotation:", lastRotation, "| Time since last rotation:", tsl, "| Estimated time till next rotation:", nextRotation)
 			}
 		}
 	}()
