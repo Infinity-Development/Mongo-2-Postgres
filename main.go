@@ -60,8 +60,7 @@ func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
 
 func main() {
 	fmt.Println("DBTool: init")
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "MongoDB connection string")
 	flag.StringVar(&dbName, "dbname", "infinity", "DB name to connect to")
