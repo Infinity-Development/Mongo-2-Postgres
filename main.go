@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	connString   string
-	dbName       string
-	backupDbName string
-	act          string
+	connString         string
+	dbName             string
+	backupDbName       string
+	act                string
+	backupTimeInterval int
 )
 
 func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
@@ -64,13 +65,16 @@ func main() {
 
 	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "MongoDB connection string")
 	flag.StringVar(&dbName, "dbname", "infinity", "DB name to connect to")
-	flag.StringVar(&act, "act", "", "Action to perform")
+	flag.StringVar(&act, "act", "", "Action to perform (backup/watch)")
 	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "Backup Postgres DB URL")
+	flag.IntVar(&backupTimeInterval, "interval", 60, "Interval for watcher to wait for")
 
 	flag.Parse()
 
+	progName := os.Args[0]
+
 	if act == "" {
-		fmt.Println("No action found")
+		fmt.Println("No action found. Try running:", progName, "--help")
 		os.Exit(-1)
 	}
 
@@ -94,6 +98,17 @@ func main() {
 
 	if act == "backup" {
 		backupDb(ctx, db, colNames)
+	} else if act == "watch" {
+		func() {
+			d := time.Duration(backupTimeInterval) * time.Minute
+			backupDb(ctx, db, colNames)
+			fmt.Println("Waiting for next backup rotation")
+			for x := range time.Tick(d) {
+				fmt.Println("Autobackup started at", x)
+				backupDb(ctx, db, colNames)
+				fmt.Println("Waiting for next backup rotation")
+			}
+		}()
 	} else {
 		panic("Unsupported operation")
 	}
