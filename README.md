@@ -4,7 +4,7 @@
   Mongo to PostgreSQL
 </h2>
 <p align="center">
-   Simple cli used to backup and migrate data from Mongoose to Postgres on a Rotating/Rolling basis.
+   Simple cli used to backup and migrate data from MongoDB (Mongoose etc.) to Postgres on a Rotating/Rolling basis.
 </p>
 
 [![Version](https://img.shields.io/badge/Version-1.0.1%20-green.svg?style=flat)](https://github.com/InfinityBotList/Mongo-2-Postgres) 
@@ -43,7 +43,7 @@ You can run ``./db-backup-tool --help`` for help on the options provided
 
 This tool supports **single backups** and **long-running automatic backups**. The long-running backups are made through a "watcher" action/mode and once run in this way can then be daemonized using systemd/tmux etc.
 
-It was originally made to help allievate issues surrounding Infinity Bot Lists database which even ZFS zvol + XFS failed to resolve which is likely due to unmaintainable code by the prior owner that is now unmaintainable. It is provided as a open source software in the hopes that others will benefit from it.
+It was originally made to help allievate issues surrounding Infinity Bot Lists database which even ZFS zvol + XFS failed to resolve which is likely due to unmaintainable code by the prior owner (which is being rewritten at this time). It is provided as a open source software in the hopes that others will benefit from it.
 
 ### Debug Stats
 
