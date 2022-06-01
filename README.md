@@ -14,7 +14,19 @@
 --- 
 
 ## Setup
-• Check back soon!
+
+This tool requires golang 1.18 (older versions *may* work with some patches but this is *not* supported)
+
+For ease of use, this tool comes with a ``Makefile`` (which just invokes ``go build``). The ``go install
+`` command can be used to install the binary to ``$GOPATH/bin`` like all go programs. You can also run ``make install`` which will copy the built binary to ``/usr/bin`` (Linux only) if you want this for any specific reason.
+
+As a backup source, postgres is currently required, **feel free to make a Pull Request if you wish to add support for other databases**
+
+As a source, this tool was created specifically for mongoDB, however **feel free to make a Pull Request if you wish to add support for another database**
+
+A mongoDB connection string can be provided via the ``--conn`` command line argument. Similarly, the postgreSQL connection string can be provided via the ``backup-db`` command line argument.
+
+This tool should be self-explanatory to use. Feel free to make a Issue if you have any problems using it!
 
 ---
 
@@ -27,16 +39,17 @@
 
 ## Usage
 
-| Command      | Description                                                   | Example                                        |
-| ------------ | ------------------------------------------------------------- | ---------------------------------------------- |
-| `help `      | List available commands and their usage                       | `./db-backup-tool --help`                      |
-| `act`        | Specify an action to perform (backup/watch/analyze)           | `./db-backup-tool --act watch`                 |
-| `backup-db`  | Specify the Postgres Connection String.                       | `./db-backup-tool --backup-db POSTGRES_URL`    |
-| `conn`       | Specify the Mongoose Connection String.                       | `./db-backup-tool --conn MONGO_URL`            |
-| `dbname`     | Specify the Mongoose Database Name.                           | `./db-backup-tool --dbname MONGO_NAME`         |
-| `interval`   | Interval for watcher to wait for (default 60 mins).           | `./db-backup-tool --interval SOME_INT`         |
+You can run ``./db-backup-tool --help`` for help on the options provided
 
----
+This tool supports **single backups** and **long-running automatic backups**. The long-running backups are made through a "watcher" action/mode and once run in this way can then be daemonized using systemd/tmux etc.
+
+It was originally made to help allievate issues surrounding Infinity Bot Lists database which even ZFS zvol + XFS failed to resolve which is likely due to unmaintainable code by the prior owner that is now unmaintainable. It is provided as a open source software in the hopes that others will benefit from it.
+
+### Debug Stats
+
+This tools provides debug stats via the signal ``USR1`` (user-defined signal 1).
+
+Example: ``pkill -USR1 db-backup-tool``
 
 ## Example Watch Output
 
