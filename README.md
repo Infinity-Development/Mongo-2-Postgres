@@ -17,8 +17,7 @@
 
 This tool requires golang 1.18 (older versions *may* work with some patches but this is *not* supported)
 
-For ease of use, this tool comes with a ``Makefile`` (which just invokes ``go build``). The ``go install
-`` command can be used to install the binary to ``$GOPATH/bin`` like all go programs. You can also run ``make install`` which will copy the built binary to ``/usr/bin`` (Linux only) if you want this for any specific reason.
+For ease of use, this tool comes with a ``Makefile`` (which just invokes ``go build``). The ``go install`` command can be used to install the binary to ``$GOPATH/bin`` like all go programs. You can also run ``make install`` which will copy the built binary to ``/usr/bin`` (Linux only) if you want this for any specific reason.
 
 As a backup source, postgres is currently required, **feel free to make a Pull Request if you wish to add support for other databases**
 
