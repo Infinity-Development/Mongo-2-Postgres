@@ -33,8 +33,6 @@ var (
 	tgtKey             string
 	tgtVal             string
 	filterHrs          int
-	analyzeObjects     [][]KVPair
-	analyzeTs          []pgtype.Timestamptz
 )
 
 type KVPair struct {
@@ -60,7 +58,17 @@ func pageOutput(obj []KVPair) {
 	s.Done()
 }
 
+func uuidToString(id pgtype.UUID) string {
+	return fmt.Sprintf("%x-%x-%x-%x-%x", id.Bytes[0:4], id.Bytes[4:6], id.Bytes[6:8], id.Bytes[8:10], id.Bytes[10:16])
+}
+
 func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
+	var (
+		analyzeObjects [][]KVPair
+		analyzeTs      []pgtype.Timestamptz
+		analyzeId      []pgtype.UUID
+	)
+
 	ctx := context.Background()
 
 	fmt.Println("DBTool: analyze")
@@ -77,7 +85,7 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 
 	interval := "interval '" + strconv.Itoa(filterHrs) + " hours'"
 
-	query, err := conn.Query(ctx, "SELECT data, ts FROM backups WHERE col = $1 AND (NOW() - ts) < "+interval, col)
+	query, err := conn.Query(ctx, "SELECT id, data, ts FROM backups WHERE col = $1 AND (NOW() - ts) < "+interval, col)
 
 	if err != nil {
 		panic(err)
@@ -90,10 +98,11 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 	var objectsFound int
 
 	for query.Next() {
+		var id pgtype.UUID
 		var data pgtype.JSONB
 		var ts pgtype.Timestamptz
 
-		if err := query.Scan(&data, &ts); err != nil {
+		if err := query.Scan(&id, &data, &ts); err != nil {
 			panic(err)
 		}
 
@@ -124,6 +133,7 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 					fmt.Println("Found object at ts", ts.Time)
 					analyzeObjects = append(analyzeObjects, encode)
 					analyzeTs = append(analyzeTs, ts)
+					analyzeId = append(analyzeId, id)
 					objectsFound++
 					break
 				}
@@ -134,12 +144,15 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 		i++
 	}
 
+	reloadNeeded := false
+
 	// Menu
 	for {
 		fmt.Println("\n\n\nANALYSIS OUTPUT\n===============")
 
 		for i := range analyzeObjects {
-			fmt.Println(strconv.Itoa(i+1)+". Found backup at ts", analyzeTs[i].Time)
+			fmt.Println(strconv.Itoa(i+1)+". Found backup", uuidToString(analyzeId[i]), "at ts", analyzeTs[i].Time)
+			fmt.Println()
 		}
 
 		fmt.Println("\nFound", i, "entities total of which", keysFound, "keys matching the target key were found")
@@ -152,6 +165,8 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 		fmt.Println("\nE: Exit menu and return")
 		fmt.Println("L: Look at a backup using pager")
 		fmt.Println("R: Restore a backup")
+		fmt.Println("D: Delete a backup")
+		fmt.Println("DA: Deletes all above backups")
 
 		fmt.Print("\n\nSelect an option: ")
 		text, _ := reader.ReadString('\n')
@@ -223,12 +238,56 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 					fmt.Println("Restored document ID:", res.InsertedID)
 				}
 			}
+		case "DA":
+			for _, v := range analyzeId {
+				_, err := conn.Exec(ctx, "DELETE FROM backups WHERE id = $1", uuidToString(v))
+
+				if err != nil {
+					panic(err)
+				}
+			}
+
+			fmt.Println("Successfully deleted all backup")
+			reloadNeeded = true
+
+		case "D":
+			fmt.Print("Which of the above ", objectsFound, " backups do you wish to delete: ")
+			backupNum, _ := reader.ReadString('\n')
+			backupNum = strings.ReplaceAll(backupNum, "\n", "")
+
+			// Parse backupNum to text
+			backupId, err := strconv.Atoi(backupNum)
+			if err != nil {
+				fmt.Println("Error while parsing backup number:", backupId)
+			} else {
+				backupId = backupId - 1
+				if len(analyzeObjects) <= backupId || backupId < 0 {
+					fmt.Println("Error while parsing backup number: invalid number")
+				} else {
+					_, err := conn.Exec(ctx, "DELETE FROM backups WHERE id = $1", uuidToString(analyzeId[backupId]))
+
+					if err != nil {
+						panic(err)
+					}
+
+					fmt.Println("Successfully deleted backup")
+					reloadNeeded = true
+				}
+			}
 		default:
 			fmt.Println("Invalid input", text, []byte(text))
 		}
 
 		fmt.Println("Retrying menu in 3 seconds.")
 		time.Sleep(3 * time.Second)
+
+		if reloadNeeded {
+			break
+		}
+	}
+
+	if reloadNeeded {
+		analyzeBackup(mongoCtx, db)
 	}
 }
 
@@ -302,20 +361,29 @@ func main() {
 
 	var ignored string
 
-	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "MongoDB connection string")
-	flag.StringVar(&dbName, "dbname", "infinity", "DB name to connect to")
-	flag.StringVar(&act, "act", "", "Action to perform (backup/watch/analyze). If act is analyze, then col must be set to the collection/column to analyze, tgtKey to the key on the document to test for and tgtVal as the value on the document to validate against\n\nExample: db-backup-tool --act analyze --col bots --tgtKey botID --tgtVal 678040985678118912 --filterHrs 12")
-	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "Backup Postgres DB URL")
-	flag.IntVar(&backupTimeInterval, "interval", 60, "Interval for watcher to wait for (minutes)")
-	flag.StringVar(&ignored, "ignore", "sessions", "What collections to ignore, seperate using ,! Spaces are ignored")
-	flag.StringVar(&col, "col", "", "Column to target (analyze only)")
-	flag.StringVar(&tgtKey, "tgtKey", "", "Target Key (analyze only)")
-	flag.StringVar(&tgtVal, "tgtVal", "", "Target Value (analyze only)")
-	flag.IntVar(&filterHrs, "filterHrs", 4, "How many hours to look back during analyze (analyze only")
+	actExamples := []string{
+		"Analyze a bot in a collection named bots to restore it back to DB: 'db-backup-tool --act analyze --col bots --tgtKey botID --tgtVal 678040985678118912 --filterHrs 12'",
+		"Create a new backup: 'db-backup-tool --act backup'",
+	}
+
+	actExamplesStr := "\n\t" + strings.Join(actExamples, "\n\n\t") + "\n"
+
+	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "[This is required] MongoDB connection string")
+	flag.StringVar(&dbName, "dbname", "infinity", "[This is required] DB name to connect to.")
+	flag.StringVar(&act, "act", "", "[This is required] Action to perform (backup/watch/analyze). If act is analyze, then col must be set to the collection/column to analyze, tgtKey to the key on the document to test for and tgtVal as the value on the document to validate against\n\nExamples:\n"+actExamplesStr)
+	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "[This is required] Backup Postgres DB URL")
+	flag.IntVar(&backupTimeInterval, "interval", 60, "[This is required if using act as watch] Interval for watcher to wait for (minutes)")
+	flag.StringVar(&ignored, "ignore", "sessions", "[This is required] What collections to ignore, seperate using ,! Spaces are ignored. Use none to not ignore any collections")
+	flag.StringVar(&col, "col", "", "[This is required if using act as analyze] Column/collection to analyze (analyze only)")
+	flag.StringVar(&tgtKey, "tgtKey", "", "[This is required if using act as analyze] The key on the document to filter analysis on (as in, which key do you want to use to look up a backup) (analyze only)")
+	flag.StringVar(&tgtVal, "tgtVal", "", "[This is required if using act as analyze] The value of the key specified in tgtKey to filter analysis on (as in, which value of the tgtKey should be used to lookup a backup. An analogy is mongo's db.findOne with one condition) (analyze only)")
+	flag.IntVar(&filterHrs, "filterHrs", 4, "[Optional] How many hours to look back during analyze (analyze only)")
 
 	flag.Parse()
 
-	ignoredCols = strings.Split(strings.ReplaceAll(ignored, " ", ""), ",")
+	if ignored != "none" {
+		ignoredCols = strings.Split(strings.ReplaceAll(ignored, " ", ""), ",")
+	}
 
 	progName := os.Args[0]
 
