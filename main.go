@@ -214,7 +214,7 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 						panic(err)
 					}
 
-					fmt.Println("Deleted", delRes.DeletedCount, " old bots")
+					fmt.Println("Deleted", delRes.DeletedCount, " old entities")
 
 					res, err := db.Collection(col).InsertOne(mongoCtx, backup)
 					if err != nil {
@@ -304,7 +304,7 @@ func main() {
 
 	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "MongoDB connection string")
 	flag.StringVar(&dbName, "dbname", "infinity", "DB name to connect to")
-	flag.StringVar(&act, "act", "", "Action to perform (backup/watch/analyze)")
+	flag.StringVar(&act, "act", "", "Action to perform (backup/watch/analyze). If act is analyze, then col must be set to the collection/column to analyze, tgtKey to the key on the document to test for and tgtVal as the value on the document to validate against\n\nExample: db-backup-tool --act analyze --col bots --tgtKey botID --tgtVal 678040985678118912 --filterHrs 12")
 	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "Backup Postgres DB URL")
 	flag.IntVar(&backupTimeInterval, "interval", 60, "Interval for watcher to wait for (minutes)")
 	flag.StringVar(&ignored, "ignore", "sessions", "What collections to ignore, seperate using ,! Spaces are ignored")
