@@ -372,7 +372,7 @@ func main() {
 	flag.StringVar(&dbName, "dbname", "infinity", "[This is required] DB name to connect to.")
 	flag.StringVar(&act, "act", "", "[This is required] Action to perform (backup/watch/analyze). If act is analyze, then col must be set to the collection/column to analyze, tgtKey to the key on the document to test for and tgtVal as the value on the document to validate against\n\nExamples:\n"+actExamplesStr)
 	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "[This is required] Backup Postgres DB URL")
-	flag.IntVar(&backupTimeInterval, "interval", 60, "[This is required if using act as watch] Interval for watcher to wait for (minutes)")
+	flag.IntVar(&backupTimeInterval, "interval", 60*4, "[This is required if using act as watch] Interval for watcher to wait for (minutes)")
 	flag.StringVar(&ignored, "ignore", "sessions", "[This is required] What collections to ignore, seperate using ,! Spaces are ignored. Use none to not ignore any collections")
 	flag.StringVar(&col, "col", "", "[This is required if using act as analyze] Column/collection to analyze (analyze only)")
 	flag.StringVar(&tgtKey, "tgtKey", "", "[This is required if using act as analyze] The key on the document to filter analysis on (as in, which key do you want to use to look up a backup) (analyze only)")
