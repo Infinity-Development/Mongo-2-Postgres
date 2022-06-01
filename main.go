@@ -247,7 +247,7 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 				}
 			}
 
-			fmt.Println("Successfully deleted all backup")
+			fmt.Println("Successfully deleted all backups")
 			reloadNeeded = true
 
 		case "D":
