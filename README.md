@@ -30,7 +30,7 @@
 | Command      | Description                                                   | Example                                        |
 | ------------ | ------------------------------------------------------------- | ---------------------------------------------- |
 | `help `      | List available commands and their usage                       | `./db-backup-tool --help`                      |
-| `act`        | Specify an action to perform (backup/watch)                   | `./db-backup-tool --act watch`                 |
+| `act`        | Specify an action to perform (backup/watch/analyze)           | `./db-backup-tool --act watch`                 |
 | `backup-db`  | Specify the Postgres Connection String.                       | `./db-backup-tool --backup-db POSTGRES_URL`    |
 | `conn`       | Specify the Mongoose Connection String.                       | `./db-backup-tool --conn MONGO_URL`            |
 | `dbname`     | Specify the Mongoose Database Name.                           | `./db-backup-tool --dbname MONGO_NAME`         |
