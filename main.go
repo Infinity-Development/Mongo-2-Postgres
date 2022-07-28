@@ -83,6 +83,8 @@ func analyzeBackup(mongoCtx context.Context, db *mongo.Database) {
 		panic(err)
 	}
 
+	conn.Exec(ctx, "DELETE FROM backups WHERE NOW() - ts > interval '1 week'")
+
 	interval := "interval '" + strconv.Itoa(filterHrs) + " hours'"
 
 	query, err := conn.Query(ctx, "SELECT id, data, ts FROM backups WHERE col = $1 AND (NOW() - ts) < "+interval, col)
@@ -317,7 +319,8 @@ func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
 		col := db.Collection(column)
 		cur, err := col.Find(ctx, bson.D{})
 		if err != nil {
-			panic(err)
+			fmt.Println("Error during mongodb col.Find;", err)
+			continue
 		}
 		defer cur.Close(ctx)
 		for cur.Next(ctx) {
@@ -325,11 +328,13 @@ func backupDb(ctx context.Context, db *mongo.Database, colNames []string) {
 			var dataIface interface{}
 			err := bson.Unmarshal([]byte(raw), &dataIface)
 			if err != nil {
-				panic(err)
+				fmt.Println("Error during marshalling;", err)
+				continue
 			}
 			_, err = conn.Exec(bkCtx, "INSERT INTO backups (col, data) VALUES ($1, $2)", column, dataIface)
 			if err != nil {
-				panic(err)
+				fmt.Println("Error during save;", err)
+				continue
 			}
 		}
 	}
@@ -368,7 +373,7 @@ func main() {
 
 	actExamplesStr := "\n\t" + strings.Join(actExamples, "\n\n\t") + "\n"
 
-	flag.StringVar(&connString, "conn", "mongodb://127.0.0.1:27017/infinity", "[This is required] MongoDB connection string")
+	flag.StringVar(&connString, "conn", os.Getenv("MONGO"), "[This is required] MongoDB connection string")
 	flag.StringVar(&dbName, "dbname", "infinity", "[This is required] DB name to connect to.")
 	flag.StringVar(&act, "act", "", "[This is required] Action to perform (backup/watch/analyze). If act is analyze, then col must be set to the collection/column to analyze, tgtKey to the key on the document to test for and tgtVal as the value on the document to validate against\n\nExamples:\n"+actExamplesStr)
 	flag.StringVar(&backupDbName, "backup-db", "postgresql://127.0.0.1:5432/backups?user=root&password=iblpublic", "[This is required] Backup Postgres DB URL")
